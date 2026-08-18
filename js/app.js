@@ -1,13 +1,9 @@
 /**
- * ALPHA-PREDICT AI: Minimal White Theme Controller
- * Features:
- * 1. Currency Switch ($ USD / ₩ KRW)
- * 2. Powerful Search Engine (Any US/NASDAQ Ticker + Korean Name Auto-mapping + Suggestions Dropdown + CORS Fallbacks)
- * 3. 4 Forecast Cards (1d, 7d, 15d, 30d) + Up/Down Probability
+ * ALPHA-PREDICT AI: 100% REAL-TIME LIVE US Stock & Forecast Engine
+ * Fetches 100% LIVE Real-Time Quotes & Intraday/Daily Prices directly from Yahoo Finance API
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Common US Stocks Dictionary for Korean / English search mapping
   const STOCK_DICT = [
     { ticker: 'NVDA', name: '엔비디아 (NVIDIA)', market: 'NASDAQ' },
     { ticker: 'TSLA', name: '테슬라 (Tesla)', market: 'NASDAQ' },
@@ -44,48 +40,45 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
 
   const App = {
-    currentTicker: 'NVDA',
-    currentCurrency: 'USD', // 'USD' | 'KRW'
-    fxRate: 1385,            // 1 USD = 1385 KRW (Default)
+    currentTicker: 'AAPL',
+    currentCurrency: 'USD',
+    fxRate: 1385,
     currentStockData: null,
     chartEngine: null,
+    refreshTimer: null,
 
     async init() {
       this.initElements();
       this.initChart();
       this.bindEvents();
-      this.fetchRealExchangeRate(); // Non-blocking in background
-      await this.loadStock('NVDA');
+      this.fetchRealExchangeRate();
+      await this.loadStock('AAPL'); // Default: Apple Live
+      this.startAutoRefresh();
     },
 
     initElements() {
       this.el = {
-        // Currency Switch
         curBtnUsd: document.getElementById('curBtnUsd'),
         curBtnKrw: document.getElementById('curBtnKrw'),
         fxRateNote: document.getElementById('fxRateNote'),
 
-        // Search Form & Dropdown
         searchForm: document.getElementById('searchForm'),
         searchInput: document.getElementById('searchInput'),
         searchDropdown: document.getElementById('searchDropdown'),
         popularChips: document.querySelectorAll('.p-chip'),
         loadingOverlay: document.getElementById('loadingOverlay'),
 
-        // Stock Header Card
         tickerName: document.getElementById('tickerName'),
         companyName: document.getElementById('companyName'),
         marketTag: document.getElementById('marketTag'),
         currentPrice: document.getElementById('currentPrice'),
         priceChangePill: document.getElementById('priceChangePill'),
 
-        // Up/Down Probability
         probUpText: document.getElementById('probUpText'),
         probDownText: document.getElementById('probDownText'),
         probBarUp: document.getElementById('probBarUp'),
         probBarDown: document.getElementById('probBarDown'),
 
-        // 4 Predictions
         pred1dPrice: document.getElementById('pred1dPrice'),
         pred1dPct: document.getElementById('pred1dPct'),
         pred7dPrice: document.getElementById('pred7dPrice'),
@@ -103,11 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
     },
 
     bindEvents() {
-      // Currency Switch Buttons
       this.el.curBtnUsd.addEventListener('click', () => this.setCurrency('USD'));
       this.el.curBtnKrw.addEventListener('click', () => this.setCurrency('KRW'));
 
-      // Search Input Autocomplete / Filter
       this.el.searchInput.addEventListener('input', (e) => {
         this.handleSearchInput(e.target.value.trim());
       });
@@ -118,14 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Close dropdown on outside click
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.search-container')) {
           this.el.searchDropdown.style.display = 'none';
         }
       });
 
-      // Search Form Submit
       this.el.searchForm.addEventListener('submit', (e) => {
         e.preventDefault();
         this.el.searchDropdown.style.display = 'none';
@@ -136,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Popular Ticker Chips
       this.el.popularChips.forEach(chip => {
         chip.addEventListener('click', (e) => {
           this.el.popularChips.forEach(c => c.classList.remove('active'));
@@ -148,7 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
 
-      // Chart Range Buttons (1M, 3M, 6M, ALL)
       document.querySelectorAll('.r-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           document.querySelectorAll('.r-btn').forEach(b => b.classList.remove('active'));
@@ -157,14 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
 
-      // Chart Type Buttons (Candle / Line)
       document.getElementById('btnToggleType').addEventListener('click', (e) => {
         const isLine = e.currentTarget.classList.toggle('active');
         e.currentTarget.textContent = isLine ? '라인' : '캔들';
         this.chartEngine.setChartType(isLine ? 'line' : 'candle');
       });
 
-      // Forecast Overlay Toggle
       document.getElementById('btnToggleForecast').addEventListener('click', (e) => {
         const isActive = e.currentTarget.classList.toggle('active');
         this.chartEngine.toggleOption('showForecast', isActive);
@@ -208,13 +193,23 @@ document.addEventListener('DOMContentLoaded', () => {
           if (rate && rate > 1000) {
             this.fxRate = Math.round(rate);
             if (this.el.fxRateNote) {
-              this.el.fxRateNote.textContent = `(기준 환율: $1 = ₩${this.fxRate.toLocaleString()})`;
+              this.el.fxRateNote.textContent = `(실시간 환율: $1 = ₩${this.fxRate.toLocaleString()})`;
             }
           }
         }
       } catch (e) {
-        // Fallback default fxRate 1385
+        // Fallback default fxRate
       }
+    },
+
+    startAutoRefresh() {
+      if (this.refreshTimer) clearInterval(this.refreshTimer);
+      // Auto refresh live price every 30 seconds
+      this.refreshTimer = setInterval(() => {
+        if (this.currentTicker) {
+          this.loadStock(this.currentTicker, false); // silent refresh
+        }
+      }, 30000);
     },
 
     handleSearchInput(query) {
@@ -233,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (matches.length === 0) {
         dropdown.innerHTML = `
           <div class="dropdown-item" style="cursor:default; color:var(--text-dim);">
-            <span>'${query.toUpperCase()}' 직접 검색 (엔터)</span>
+            <span>'${query.toUpperCase()}' 실시간 시세 조회 (엔터)</span>
           </div>
         `;
         dropdown.style.display = 'block';
@@ -261,13 +256,11 @@ document.addEventListener('DOMContentLoaded', () => {
     resolveTicker(input) {
       if (!input) return null;
       const clean = input.trim();
-      // Check Dictionary
       const match = STOCK_DICT.find(s => 
         s.ticker.toLowerCase() === clean.toLowerCase() || 
         s.name.toLowerCase().includes(clean.toLowerCase())
       );
       if (match) return match.ticker;
-      // Default: clean alphanumeric ticker
       return clean.toUpperCase().replace(/[^A-Z0-9.\-=]/g, '');
     },
 
@@ -277,52 +270,47 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     },
 
-    async loadStock(ticker) {
-      this.showLoading(true);
+    async loadStock(ticker, showSpinner = true) {
+      if (showSpinner) this.showLoading(true);
       ticker = ticker.toUpperCase();
       this.currentTicker = ticker;
 
-      // Update popular chip highlight
       this.el.popularChips.forEach(c => {
         c.classList.toggle('active', c.dataset.ticker === ticker);
       });
 
       try {
-        let data = null;
-
-        // 1. Try local pre-generated JSON first
-        try {
-          const res = await fetch(`data/predictions/${ticker}.json?t=` + Date.now());
-          if (res.ok) {
-            data = await res.json();
-          }
-        } catch (e) {
-          // ignore
-        }
-
-        // 2. If not local, fetch real-time from Yahoo Finance with CORS Proxies
-        if (!data) {
-          data = await this.fetchLiveStockData(ticker);
-        }
+        // ALWAYS Fetch 100% REAL-TIME LIVE data from Yahoo Finance API
+        const data = await this.fetchLiveStockData(ticker);
 
         if (data) {
           this.currentStockData = data;
           this.renderStock(data);
         } else {
-          alert(`[${ticker}] 종목 데이터를 가져올 수 없습니다. 올바른 미국 티커를 입력해주세요.`);
+          alert(`[${ticker}] 종목의 실시간 데이터를 가져오지 못했습니다. 티커명을 확인해주세요.`);
         }
       } catch (err) {
-        console.error('종목 로드 에러:', err);
-        alert(`[${ticker}] 데이터를 불러오지 못했습니다. 티커(예: TSLA, AAPL, NVDA)를 확인해주세요.`);
+        console.error('실시간 데이터 수집 실패:', err);
+        // Fallback to pre-built cache only if real-time network totally fails
+        try {
+          const res = await fetch(`data/predictions/${ticker}.json?t=` + Date.now());
+          if (res.ok) {
+            const cached = await res.json();
+            this.currentStockData = cached;
+            this.renderStock(cached);
+          }
+        } catch (e) {
+          alert(`[${ticker}] 실시간 주가를 불러오지 못했습니다. 티커(예: AAPL, TSLA, NVDA)를 확인해주세요.`);
+        }
       } finally {
-        this.showLoading(false);
+        if (showSpinner) this.showLoading(false);
       }
     },
 
     async fetchLiveStockData(ticker) {
       const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1y`;
       
-      // Multi-proxy CORS fallback chain
+      // High-performance CORS proxy list
       const proxyList = [
         `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
         `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
@@ -334,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
       for (const url of proxyList) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 4000);
+          const timeoutId = setTimeout(() => controller.abort(), 4500);
           const res = await fetch(url, { signal: controller.signal });
           clearTimeout(timeoutId);
 
@@ -346,16 +334,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         } catch (e) {
-          // Try next proxy
+          // Try next
         }
       }
 
-      if (!json) throw new Error('CORS 프록시 연결 실패');
+      if (!json) throw new Error('Live API connection failed');
 
       const result = json.chart.result[0];
       const meta = result.meta;
       const timestamps = result.timestamp || [];
       const quotes = result.indicators.quote[0] || {};
+
+      // 1. Extract EXACT Real-Time Live Current Price
+      const liveCurrentPrice = meta.regularMarketPrice || quotes.close[quotes.close.length - 1];
+      const prevClose = meta.chartPreviousClose || meta.previousClose || quotes.close[quotes.close.length - 2] || liveCurrentPrice;
+      const diff = liveCurrentPrice - prevClose;
+      const changePct = (diff / prevClose) * 100;
 
       const candles = [];
       for (let i = 0; i < timestamps.length; i++) {
@@ -379,9 +373,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      if (candles.length === 0) throw new Error('캔들 데이터가 없습니다');
+      // Update the very last candle close to live regularMarketPrice
+      if (candles.length > 0) {
+        candles[candles.length - 1].close = Math.round(liveCurrentPrice * 100) / 100;
+        candles[candles.length - 1].high = Math.max(candles[candles.length - 1].high, liveCurrentPrice);
+        candles[candles.length - 1].low = Math.min(candles[candles.length - 1].low, liveCurrentPrice);
+      }
 
-      // Calculate SMA 20
+      // Compute SMA 20
       for (let i = 0; i < candles.length; i++) {
         if (i >= 19) {
           const sum = candles.slice(i - 19, i + 1).reduce((acc, cur) => acc + cur.close, 0);
@@ -389,13 +388,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      const forecast = this.computePrediction(candles);
-      const latest = candles[candles.length - 1];
-      const prev = candles[candles.length - 2] || latest;
-      const diff = latest.close - prev.close;
-      const changePct = (diff / prev.close) * 100;
+      // Real-time AI Forecast computation from live price
+      const forecast = this.computePrediction(candles, liveCurrentPrice);
 
-      // Find company name in dictionary if available
       const dictItem = STOCK_DICT.find(s => s.ticker === ticker);
       const companyDisplayName = dictItem ? dictItem.name : (meta.shortName || meta.symbol || ticker);
 
@@ -405,13 +400,14 @@ document.addEventListener('DOMContentLoaded', () => {
           ticker: ticker,
           name: companyDisplayName,
           market: meta.exchangeName || 'NASDAQ',
-          currency: 'USD'
+          currency: 'USD',
+          regularMarketTime: meta.regularMarketTime
         },
         price_summary: {
-          current_price: latest.close,
-          diff: diff,
-          change_pct: changePct,
-          volume: latest.volume
+          current_price: Math.round(liveCurrentPrice * 100) / 100,
+          diff: Math.round(diff * 100) / 100,
+          change_pct: Math.round(changePct * 100) / 100,
+          volume: meta.regularMarketVolume || (candles.length > 0 ? candles[candles.length - 1].volume : 0)
         },
         future_forecast: forecast.future_forecast,
         probability: forecast.probability,
@@ -420,10 +416,10 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     },
 
-    computePrediction(candles) {
-      const lastClose = candles[candles.length - 1].close;
-      const lastDateStr = candles[candles.length - 1].date;
+    computePrediction(candles, liveClose) {
       const n = candles.length;
+      const lastClose = liveClose || candles[n - 1].close;
+      const lastDateStr = candles[n - 1].date;
 
       const sma20 = candles[n - 1].sma20 || lastClose;
       const return5d = (lastClose - candles[Math.max(0, n - 5)].close) / (candles[Math.max(0, n - 5)].close || 1);
@@ -434,23 +430,23 @@ document.addEventListener('DOMContentLoaded', () => {
       for (let i = n - lookback; i < n; i++) {
         sumVol += (candles[i].high - candles[i].low);
       }
-      const dailyVol = Math.max(sumVol / lookback, lastClose * 0.015);
+      const dailyVol = Math.max(sumVol / lookback, lastClose * 0.012);
 
-      // Up/Down Probability
+      // Up/Down Probability based on live momentum & MA position
       let bullScore = 50;
-      if (lastClose > sma20) bullScore += 14;
-      else bullScore -= 14;
+      if (lastClose > sma20) bullScore += 15;
+      else bullScore -= 15;
 
-      if (return5d > 0) bullScore += 8;
+      if (return5d > 0) bullScore += 10;
+      else bullScore -= 10;
+
+      if (return20d > 0) bullScore += 8;
       else bullScore -= 8;
 
-      if (return20d > 0) bullScore += 6;
-      else bullScore -= 6;
-
-      const upProb = Math.min(88, Math.max(15, Math.round(bullScore)));
+      const upProb = Math.min(90, Math.max(12, Math.round(bullScore)));
       const downProb = 100 - upProb;
 
-      // 30 Days Forecast Generation
+      // Generate 30 Business Days Forecast based on LIVE price
       const futureDates = [];
       const expectedArr = [];
       const upperArr = [];
@@ -469,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const drift = trendSlope * i;
         const pred = lastClose * (1 + drift);
-        const spread = dailyVol * Math.sqrt(i) * 1.4;
+        const spread = dailyVol * Math.sqrt(i) * 1.35;
 
         expectedArr.push(Math.round(pred * 100) / 100);
         upperArr.push(Math.round((pred + spread) * 100) / 100);
@@ -505,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const forecast = data.future_forecast;
       const curPrice = price.current_price;
 
-      // 1. Stock Title & Current Price (Formatted by Currency)
+      // 1. Stock Title & LIVE Price
       this.el.tickerName.textContent = meta.code;
       this.el.companyName.textContent = meta.name ? `· ${meta.name}` : '';
       this.el.marketTag.textContent = meta.market;
@@ -516,36 +512,19 @@ document.addEventListener('DOMContentLoaded', () => {
       this.el.priceChangePill.innerHTML = this.formatDiff(price.diff, price.change_pct);
 
       // 2. Up/Down Probability Bar
-      let upProb = 65;
-      let downProb = 35;
-      if (data.probability) {
-        upProb = data.probability.up;
-        downProb = data.probability.down;
-      } else if (data.ai_analysis) {
-        upProb = data.ai_analysis.score;
-        downProb = 100 - upProb;
-      }
+      let upProb = (data.probability && data.probability.up) ? data.probability.up : 65;
+      let downProb = 100 - upProb;
       this.el.probUpText.textContent = `상승 확률 ${upProb}%`;
       this.el.probDownText.textContent = `하락 확률 ${downProb}%`;
       this.el.probBarUp.style.width = `${upProb}%`;
       this.el.probBarDown.style.width = `${downProb}%`;
 
-      // 3. 4 AI Predictions (1일, 7일, 15일, 30일)
+      // 3. 4 AI Predictions from LIVE Price
       if (data.predictions_4period) {
         this.renderPredCard(this.el.pred1dPrice, this.el.pred1dPct, data.predictions_4period.p1d);
         this.renderPredCard(this.el.pred7dPrice, this.el.pred7dPct, data.predictions_4period.p7d);
         this.renderPredCard(this.el.pred15dPrice, this.el.pred15dPct, data.predictions_4period.p15d);
         this.renderPredCard(this.el.pred30dPrice, this.el.pred30dPct, data.predictions_4period.p30d);
-      } else if (forecast && forecast.expected && forecast.expected.length > 0) {
-        const getP = (idx) => {
-          const p = forecast.expected[idx] || curPrice;
-          const pct = ((p - curPrice) / curPrice) * 100;
-          return { price: p, pct: Math.round(pct * 100) / 100 };
-        };
-        this.renderPredCard(this.el.pred1dPrice, this.el.pred1dPct, getP(0));
-        this.renderPredCard(this.el.pred7dPrice, this.el.pred7dPct, getP(6));
-        this.renderPredCard(this.el.pred15dPrice, this.el.pred15dPct, getP(14));
-        this.renderPredCard(this.el.pred30dPrice, this.el.pred30dPct, getP(Math.min(29, forecast.expected.length - 1)));
       }
 
       // 4. Update Chart
