@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ALPHA-PREDICT AI | 미국 주식 AI 예측 (원화/달러)</title>
+  <meta name="description" content="나스닥/미국 모든 주식 실시간 검색 & 원화/달러 보기 & 1일, 7일, 15일, 30일 후 AI 주가 예측 및 상승/하락 확률" />
+  <meta name="theme-color" content="#FFFFFF" />
+  
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+  <div class="mobile-app-wrapper">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <span>실시간 주가 & AI 예측 계산 중...</span>
+    </div>
+
+    <!-- Header & Currency Switch -->
+    <header class="app-header">
+      <div class="header-top-row">
+        <div class="app-brand">
+          <div class="brand-icon">📈</div>
+          <span class="brand-title">ALPHA AI</span>
+        </div>
+
+        <!-- 💵 Currency Switch ($ USD / ₩ KRW) -->
+        <div class="currency-switch">
+          <button type="button" id="curBtnUsd" class="cur-btn active">$ USD</button>
+          <button type="button" id="curBtnKrw" class="cur-btn">₩ KRW</button>
+        </div>
+      </div>
+
+      <!-- Realtime Search Form with Autocomplete Dropdown -->
+      <div class="search-container">
+        <form id="searchForm" class="search-form">
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="종목명 or 티커 검색 (예: 테슬라, NVDA, 애플, COIN...)" autocomplete="off" />
+          </div>
+          <button type="submit" class="btn-search">검색</button>
+        </form>
+        <!-- Suggestion Dropdown -->
+        <div id="searchDropdown" class="search-dropdown"></div>
+      </div>
+
+      <!-- Popular Ticker Quick Chips -->
+      <div class="popular-chips">
+        <button type="button" class="p-chip active" data-ticker="NVDA">NVDA 엔비디아</button>
+        <button type="button" class="p-chip" data-ticker="TSLA">TSLA 테슬라</button>
+        <button type="button" class="p-chip" data-ticker="AAPL">AAPL 애플</button>
+        <button type="button" class="p-chip" data-ticker="PLTR">PLTR 팔란티어</button>
+        <button type="button" class="p-chip" data-ticker="MSFT">MSFT 마소</button>
+        <button type="button" class="p-chip" data-ticker="COIN">COIN 코인베이스</button>
+        <button type="button" class="p-chip" data-ticker="AMZN">AMZN 아마존</button>
+        <button type="button" class="p-chip" data-ticker="QQQ">QQQ 나스닥ETF</button>
+      </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="app-content">
+      <!-- 1. Stock Price Header Card -->
+      <section class="stock-header-card">
+        <div class="stock-title-row">
+          <div class="stock-main-title">
+            <h1 id="tickerName" class="stock-ticker-name">NVDA</h1>
+            <span id="companyName" class="stock-company-name">· 엔비디아</span>
+          </div>
+          <span id="marketTag" class="market-label">NASDAQ</span>
+        </div>
+
+        <div class="price-display-row">
+          <span id="currentPrice" class="big-price">$0.00</span>
+          <div id="priceChangePill" class="price-change-pill bullish">
+            <span>▲ +$0.00 (+0.00%)</span>
+          </div>
+        </div>
+        <div id="fxRateNote" class="fx-rate-note">(기준 환율: $1 = ₩1,385)</div>
+      </section>
+
+      <!-- 2. Simple Up / Down Probability Bar -->
+      <section class="probability-section">
+        <div class="prob-label-row">
+          <span id="probUpText" class="prob-up-text">상승 확률 65%</span>
+          <span id="probDownText" class="prob-down-text">하락 확률 35%</span>
+        </div>
+        <div class="prob-bar-container">
+          <div id="probBarUp" class="prob-bar-up" style="width: 65%;"></div>
+          <div id="probBarDown" class="prob-bar-down" style="width: 35%;"></div>
+        </div>
+      </section>
+
+      <!-- 3. 4 AI Predictions (1일, 7일, 15일, 30일) -->
+      <section class="prediction-4grid">
+        <!-- 1일 후 -->
+        <div class="pred-card">
+          <div class="pred-card-header">
+            <span>🔮 1일 후</span>
+            <span class="pred-badge-period">내일</span>
+          </div>
+          <span id="pred1dPrice" class="pred-price-val">$0.00</span>
+          <span id="pred1dPct" class="pred-pct-val bullish">▲ +0.00%</span>
+        </div>
+
+        <!-- 7일 후 -->
+        <div class="pred-card">
+          <div class="pred-card-header">
+            <span>🔮 7일 후</span>
+            <span class="pred-badge-period">1주일</span>
+          </div>
+          <span id="pred7dPrice" class="pred-price-val">$0.00</span>
+          <span id="pred7dPct" class="pred-pct-val bullish">▲ +0.00%</span>
+        </div>
+
+        <!-- 15일 후 -->
+        <div class="pred-card">
+          <div class="pred-card-header">
+            <span>🚀 15일 후</span>
+            <span class="pred-badge-period">보름</span>
+          </div>
+          <span id="pred15dPrice" class="pred-price-val">$0.00</span>
+          <span id="pred15dPct" class="pred-pct-val bullish">▲ +0.00%</span>
+        </div>
+
+        <!-- 30일 후 -->
+        <div class="pred-card">
+          <div class="pred-card-header">
+            <span>🚀 30일 후</span>
+            <span class="pred-badge-period">한달</span>
+          </div>
+          <span id="pred30dPrice" class="pred-price-val">$0.00</span>
+          <span id="pred30dPct" class="pred-pct-val bullish">▲ +0.00%</span>
+        </div>
+      </section>
+
+      <!-- 4. Interactive Chart Panel (White Theme) -->
+      <section class="chart-container-card">
+        <div class="chart-header-row">
+          <!-- Time Range -->
+          <div class="chart-range-group">
+            <button type="button" class="r-btn" data-range="1mo">1M</button>
+            <button type="button" class="r-btn active" data-range="3mo">3M</button>
+            <button type="button" class="r-btn" data-range="6mo">6M</button>
+            <button type="button" class="r-btn" data-range="all">ALL</button>
+          </div>
+
+          <!-- Type & Forecast Toggles -->
+          <div class="chart-type-toggles">
+            <button type="button" id="btnToggleType" class="t-btn">캔들</button>
+            <button type="button" id="btnToggleForecast" class="t-btn active">🔮 AI 구름대</button>
+          </div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-wrapper">
+          <div id="whiteTooltip" class="white-tooltip" style="display:none;"></div>
+          <canvas id="mainChartCanvas"></canvas>
+        </div>
+
+        <div style="font-size: 0.65rem; color: var(--text-dim); text-align: center;">
+          💡 차트를 손가락으로 터치 드래그하면 날짜별 주가와 AI 예상치가 표시됩니다.
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>© 2026 ALPHA-PREDICT AI · 미국 전종목 원화/달러 AI 예측</p>
+    </footer>
+  </div>
+
+  <script src="js/chart_engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

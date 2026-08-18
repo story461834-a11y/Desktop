@@ -1,0 +1,548 @@
+/* ==========================================================================
+   ALPHA-PREDICT AI: Minimal Clean White Mobile Theme + Currency & Search UI
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap');
+
+:root {
+  --bg-body: #F1F5F9;
+  --bg-card: #FFFFFF;
+  --bg-card-sub: #F8FAFC;
+  --border-color: #E2E8F0;
+  --border-active: #2563EB;
+
+  --text-main: #0F172A;
+  --text-sub: #64748B;
+  --text-dim: #94A3B8;
+
+  --accent-blue: #2563EB;
+  --accent-light-blue: #EFF6FF;
+
+  --bullish: #10B981;
+  --bullish-bg: #ECFDF5;
+  --bearish: #EF4444;
+  --bearish-bg: #FEF2F2;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: 'Outfit', var(--font-sans);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  overflow-x: hidden;
+}
+
+/* Mobile App Shell */
+.mobile-app-wrapper {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  position: relative;
+  padding-bottom: 2rem;
+}
+
+/* Header */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.header-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.brand-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--accent-blue);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+.brand-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-main);
+}
+
+/* Currency Toggle Switch ($ USD / ₩ KRW) */
+.currency-switch {
+  display: flex;
+  background: var(--bg-card-sub);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  padding: 2px;
+}
+.cur-btn {
+  padding: 0.25rem 0.6rem;
+  border: none;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-sub);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cur-btn.active {
+  background: var(--accent-blue);
+  color: #FFFFFF;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.3);
+}
+
+/* Search Form with Auto Suggestion */
+.search-container {
+  position: relative;
+  width: 100%;
+}
+.search-form {
+  display: flex;
+  gap: 0.4rem;
+  width: 100%;
+}
+.search-input-wrap {
+  position: relative;
+  flex: 1;
+}
+.search-input-wrap input {
+  width: 100%;
+  padding: 0.6rem 0.75rem 0.6rem 2.1rem;
+  background: var(--bg-card-sub);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  outline: none;
+}
+.search-input-wrap input:focus {
+  border-color: var(--accent-blue);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+.search-icon {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+.btn-search {
+  padding: 0 1rem;
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Search Dropdown / Autocomplete Box */
+.search-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  margin-top: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+}
+.dropdown-item {
+  padding: 0.55rem 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #F1F5F9;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.dropdown-item:last-child { border-bottom: none; }
+.dropdown-item:hover {
+  background: var(--accent-light-blue);
+}
+.item-ticker { font-weight: 700; color: var(--accent-blue); }
+.item-name { color: var(--text-sub); font-size: 0.75rem; }
+
+/* Popular Ticker Chips */
+.popular-chips {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding: 0.4rem 1rem 0;
+  scrollbar-width: none;
+}
+.popular-chips::-webkit-scrollbar {
+  display: none;
+}
+.p-chip {
+  flex-shrink: 0;
+  padding: 0.3rem 0.65rem;
+  background: var(--bg-card-sub);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.p-chip.active {
+  background: var(--accent-blue);
+  color: #fff;
+  border-color: var(--accent-blue);
+}
+
+/* Main Content Body */
+.app-content {
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Stock Header Card */
+.stock-header-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.stock-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.stock-main-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.stock-ticker-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: var(--text-main);
+}
+.stock-company-name {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  font-weight: 500;
+}
+.market-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+  background: var(--accent-light-blue);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.price-display-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.big-price {
+  font-size: 2rem;
+  font-weight: 800;
+  font-family: var(--font-display);
+  letter-spacing: -0.5px;
+}
+.price-change-pill {
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.price-change-pill.bullish {
+  background: var(--bullish-bg);
+  color: var(--bullish);
+}
+.price-change-pill.bearish {
+  background: var(--bearish-bg);
+  color: var(--bearish);
+}
+
+.fx-rate-note {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-top: -0.2rem;
+}
+
+/* 🎯 Simple Up / Down Probability Bar */
+.probability-section {
+  background: var(--bg-card-sub);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.prob-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.prob-up-text { color: var(--bullish); }
+.prob-down-text { color: var(--bearish); }
+
+.prob-bar-container {
+  height: 10px;
+  background: #FEE2E2;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  display: flex;
+}
+.prob-bar-up {
+  height: 100%;
+  background: var(--bullish);
+  transition: width 0.6s ease;
+}
+.prob-bar-down {
+  height: 100%;
+  background: var(--bearish);
+  transition: width 0.6s ease;
+}
+
+/* 🔮 4 AI Prediction Cards (1일, 7일, 15일, 30일) */
+.prediction-4grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem;
+}
+
+.pred-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+.pred-card-header {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.pred-badge-period {
+  background: var(--bg-card-sub);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  color: var(--accent-blue);
+  font-weight: 800;
+}
+
+.pred-price-val {
+  font-size: 1.2rem;
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: var(--text-main);
+}
+.pred-pct-val {
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+.pred-pct-val.bullish { color: var(--bullish); }
+.pred-pct-val.bearish { color: var(--bearish); }
+
+/* Chart Section */
+.chart-container-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.chart-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.chart-range-group {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--bg-card-sub);
+  padding: 0.2rem;
+  border-radius: var(--radius-sm);
+}
+.r-btn {
+  padding: 0.25rem 0.55rem;
+  background: transparent;
+  border: none;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-sub);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.r-btn.active {
+  background: #FFFFFF;
+  color: var(--accent-blue);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chart-type-toggles {
+  display: flex;
+  gap: 0.3rem;
+}
+.t-btn {
+  padding: 0.25rem 0.55rem;
+  background: var(--bg-card-sub);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+.t-btn.active {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  background: var(--accent-light-blue);
+}
+
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 330px;
+  background: #FAFAFA;
+  border-radius: var(--radius-md);
+  border: 1px solid #F1F5F9;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+#mainChartCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.white-tooltip {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.65rem;
+  font-size: 0.7rem;
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-sub);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  pointer-events: none;
+  z-index: 10;
+}
+.white-tooltip span strong {
+  color: var(--text-main);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  display: none;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  z-index: 60;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+.loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.app-footer {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  padding: 0.5rem 1rem;
+}

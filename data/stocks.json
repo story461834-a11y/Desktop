@@ -1,0 +1,126 @@
+{
+  "updated_at": "2026-08-18 21:17:58",
+  "total_count": 15,
+  "stocks": [
+    {
+      "ticker": "NVDA",
+      "code": "NVDA",
+      "name": "엔비디아 (NVIDIA)",
+      "market": "NASDAQ",
+      "currency": "USD",
+      "category": "AI / GPU"
+    },
+    {
+      "ticker": "AAPL",
+      "code": "AAPL",
+      "name": "애플 (Apple)",
+      "market": "NASDAQ",
+      "currency": "USD",
+      "category": "빅테크 / 모바일"
+    },
+    {
+      "ticker": "TSLA",
+      "code": "TSLA",
+      "name": "테슬라 (Tesla)",
+      "market": "NASDAQ",
+      "currency": "USD",
+      "category": "전기차 / AI"
+    },
+    {
+      "ticker": "MSFT",
+      "code": "MSFT",
+      "name": "마이크로소프트",
+      "market": "NASDAQ",
+      "currency": "USD",
+      "category": "클라우드 / AI"
+    },
+    {
+      "ticker": "GOOGL",
+      "code": "GOOGL",
+      "name": "알파벳 (Google)",
+      "market": "NASDAQ",
+      "currency": "USD",
+      "category": "검색 / AI"
+    },
+    {
+      "ticker": "AMZN",
+      "code": "AMZN",
+      "name": "아마존 (Amazon)",
+      "market": "NASDAQ",
+      "currency": "USD",
+      "category": "이커머스 / 클라우드"
+    },
+    {
+      "ticker": "META",
+      "code": "META",
+      "name": "메타 (Meta)",
+      "market": "NASDAQ",
+      "currency": "USD",
+      "category": "SNS / 메타버스"
+    },
+    {
+      "ticker": "TSM",
+      "code": "TSM",
+      "name": "TSMC",
+      "market": "NYSE",
+      "currency": "USD",
+      "category": "반도체 파운드리"
+    },
+    {
+      "ticker": "AMD",
+      "code": "AMD",
+      "name": "AMD",
+      "market": "NASDAQ",
+      "currency": "USD",
+      "category": "CPU / GPU"
+    },
+    {
+      "ticker": "AVGO",
+      "code": "AVGO",
+      "name": "브로드컴 (Broadcom)",
+      "market": "NASDAQ",
+      "currency": "USD",
+      "category": "통신 / 반도체"
+    },
+    {
+      "ticker": "PLTR",
+      "code": "PLTR",
+      "name": "팔란티어 (Palantir)",
+      "market": "NYSE",
+      "currency": "USD",
+      "category": "AI 빅데이터"
+    },
+    {
+      "ticker": "NFLX",
+      "code": "NFLX",
+      "name": "넷플릭스 (Netflix)",
+      "market": "NASDAQ",
+      "currency": "USD",
+      "category": "엔터 / OTT"
+    },
+    {
+      "ticker": "COIN",
+      "code": "COIN",
+      "name": "코인베이스 (Coinbase)",
+      "market": "NASDAQ",
+      "currency": "USD",
+      "category": "가상자산 / 핀테크"
+    },
+    {
+      "ticker": "QQQ",
+      "code": "QQQ",
+      "name": "나스닥100 ETF (Invesco)",
+      "market": "NASDAQ",
+      "currency": "USD",
+      "category": "대표 지수 ETF"
+    },
+    {
+      "ticker": "SPY",
+      "code": "SPY",
+      "name": "S&P 500 ETF (SPDR)",
+      "market": "NYSE",
+      "currency": "USD",
+      "category": "시장 대표 ETF"
+    }
+  ]
+}
