@@ -1,5 +1,6 @@
 /**
  * ALPHA-PREDICT AI: White Minimal Theme Canvas Chart Engine
+ * Supports Dynamic Currency Switch (USD $ / KRW ₩)
  */
 
 class StockChartEngine {
@@ -10,6 +11,10 @@ class StockChartEngine {
 
     this.chartData = [];
     this.forecastData = null;
+
+    // Currency Setting
+    this.currency = 'USD'; // 'USD' | 'KRW'
+    this.fxRate = 1380;     // USD to KRW rate
 
     // View Options
     this.chartType = 'candle'; // 'candle' | 'line'
@@ -100,6 +105,12 @@ class StockChartEngine {
     this.render();
   }
 
+  setCurrency(curr, rate) {
+    this.currency = curr;
+    if (rate) this.fxRate = rate;
+    this.render();
+  }
+
   setTimeRange(range) {
     this.timeRange = range;
     this.applyTimeFilter();
@@ -128,6 +139,16 @@ class StockChartEngine {
     this.render();
   }
 
+  formatPrice(usdVal) {
+    if (usdVal == null || isNaN(usdVal)) return '-';
+    if (this.currency === 'KRW') {
+      const krw = Math.round(usdVal * this.fxRate);
+      return `₩${krw.toLocaleString()}`;
+    } else {
+      return `$${Number(usdVal).toFixed(2)}`;
+    }
+  }
+
   render() {
     if (!this.ctx || !this.chartData || this.chartData.length === 0) return;
 
@@ -140,7 +161,7 @@ class StockChartEngine {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, w, h);
 
-    const padding = { top: 20, right: 48, bottom: 25, left: 10 };
+    const padding = { top: 20, right: 60, bottom: 25, left: 10 };
     const mainHeight = h * 0.70 - padding.top;
     const volHeight = h * 0.30 - padding.bottom;
     const volTop = padding.top + mainHeight + 10;
@@ -181,7 +202,7 @@ class StockChartEngine {
     const getY = (price) => padding.top + mainHeight - ((price - minPrice) / (maxPrice - minPrice)) * mainHeight;
     const getVolY = (vol) => volTop + volHeight - (vol / maxVol) * volHeight;
 
-    // 1. Grid & Price Labels
+    // 1. Grid & Price Labels (Currency Adaptive)
     this.drawGrid(padding, mainHeight, minPrice, maxPrice, w);
 
     // 2. SMA 20 Line
@@ -226,7 +247,7 @@ class StockChartEngine {
       ctx.lineTo(w - pad.right, y);
       ctx.stroke();
 
-      ctx.fillText(`$${price.toFixed(1)}`, w - pad.right + 4, y + 3);
+      ctx.fillText(this.formatPrice(price), w - pad.right + 4, y + 3);
     }
   }
 
@@ -380,7 +401,7 @@ class StockChartEngine {
       const isUp = c.close >= c.open;
       this.tooltip.innerHTML = `
         <span>${c.date.slice(5)}</span>
-        <span>종가: <strong style="color: ${isUp ? '#10B981' : '#EF4444'};">$${c.close.toFixed(2)}</strong></span>
+        <span>종가: <strong style="color: ${isUp ? '#10B981' : '#EF4444'};">${this.formatPrice(c.close)}</strong></span>
         <span>거래량: <strong>${(c.volume / 1000000).toFixed(1)}M</strong></span>
       `;
     } else {
@@ -388,9 +409,9 @@ class StockChartEngine {
       const fDate = this.forecastData.dates[fIdx];
       const expected = this.forecastData.expected[fIdx];
       this.tooltip.innerHTML = `
-        <span style="color: #2563EB; font-weight:700;">예측일: ${fDate.slice(5)}</span>
-        <span>예상가: <strong style="color: #2563EB;">$${expected.toFixed(2)}</strong></span>
-        <span>구간: <strong>$${this.forecastData.lower[fIdx].toFixed(1)}~$${this.forecastData.upper[fIdx].toFixed(1)}</strong></span>
+        <span style="color: #2563EB; font-weight:700;">예측: ${fDate.slice(5)}</span>
+        <span>예상: <strong style="color: #2563EB;">${this.formatPrice(expected)}</strong></span>
+        <span>구간: <strong>${this.formatPrice(this.forecastData.lower[fIdx])}~${this.formatPrice(this.forecastData.upper[fIdx])}</strong></span>
       `;
     }
     this.tooltip.style.display = 'flex';

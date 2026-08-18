@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ALPHA-PREDICT AI: Minimal Clean White Mobile Theme
+   ALPHA-PREDICT AI: Minimal Clean White Mobile Theme + Currency & Search UI
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap');
@@ -9,7 +9,7 @@
   --bg-card: #FFFFFF;
   --bg-card-sub: #F8FAFC;
   --border-color: #E2E8F0;
-  --border-active: #3B82F6;
+  --border-active: #2563EB;
 
   --text-main: #0F172A;
   --text-sub: #64748B;
@@ -20,11 +20,8 @@
 
   --bullish: #10B981;
   --bullish-bg: #ECFDF5;
-  --bullish-border: #A7F3D0;
-
   --bearish: #EF4444;
   --bearish-bg: #FEF2F2;
-  --bearish-border: #FECACA;
 
   --radius-sm: 8px;
   --radius-md: 14px;
@@ -52,7 +49,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Mobile Screen Shell */
+/* Mobile App Shell */
 .mobile-app-wrapper {
   width: 100%;
   max-width: 480px;
@@ -73,7 +70,7 @@ body {
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
-  padding: 0.85rem 1rem;
+  padding: 0.75rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
@@ -108,16 +105,37 @@ body {
   letter-spacing: -0.5px;
   color: var(--text-main);
 }
-.us-badge {
-  font-size: 0.65rem;
-  padding: 0.15rem 0.45rem;
-  background: var(--accent-light-blue);
-  color: var(--accent-blue);
+
+/* Currency Toggle Switch ($ USD / ₩ KRW) */
+.currency-switch {
+  display: flex;
+  background: var(--bg-card-sub);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-full);
+  padding: 2px;
+}
+.cur-btn {
+  padding: 0.25rem 0.6rem;
+  border: none;
+  background: transparent;
+  font-size: 0.75rem;
   font-weight: 700;
+  color: var(--text-sub);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cur-btn.active {
+  background: var(--accent-blue);
+  color: #FFFFFF;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.3);
 }
 
-/* Search Form (Search Any NASDAQ Ticker) */
+/* Search Form with Auto Suggestion */
+.search-container {
+  position: relative;
+  width: 100%;
+}
 .search-form {
   display: flex;
   gap: 0.4rem;
@@ -137,7 +155,6 @@ body {
   font-size: 0.85rem;
   font-weight: 600;
   outline: none;
-  text-transform: uppercase;
 }
 .search-input-wrap input:focus {
   border-color: var(--accent-blue);
@@ -164,7 +181,39 @@ body {
   white-space: nowrap;
 }
 
-/* Quick Popular Ticker Chips */
+/* Search Dropdown / Autocomplete Box */
+.search-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  margin-top: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+}
+.dropdown-item {
+  padding: 0.55rem 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #F1F5F9;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.dropdown-item:last-child { border-bottom: none; }
+.dropdown-item:hover {
+  background: var(--accent-light-blue);
+}
+.item-ticker { font-weight: 700; color: var(--accent-blue); }
+.item-name { color: var(--text-sub); font-size: 0.75rem; }
+
+/* Popular Ticker Chips */
 .popular-chips {
   display: flex;
   gap: 0.4rem;
@@ -193,7 +242,7 @@ body {
   border-color: var(--accent-blue);
 }
 
-/* Main Body Content */
+/* Main Content Body */
 .app-content {
   padding: 0.85rem 1rem;
   display: flex;
@@ -201,7 +250,7 @@ body {
   gap: 1rem;
 }
 
-/* Stock Price Header */
+/* Stock Header Card */
 .stock-header-card {
   background: #FFFFFF;
   border: 1px solid var(--border-color);
@@ -272,6 +321,12 @@ body {
   color: var(--bearish);
 }
 
+.fx-rate-note {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-top: -0.2rem;
+}
+
 /* 🎯 Simple Up / Down Probability Bar */
 .probability-section {
   background: var(--bg-card-sub);
@@ -325,7 +380,6 @@ body {
   flex-direction: column;
   gap: 0.25rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-  position: relative;
 }
 .pred-card-header {
   font-size: 0.75rem;
@@ -345,7 +399,7 @@ body {
 }
 
 .pred-price-val {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 800;
   font-family: var(--font-display);
   color: var(--text-main);
@@ -360,7 +414,7 @@ body {
 .pred-pct-val.bullish { color: var(--bullish); }
 .pred-pct-val.bearish { color: var(--bearish); }
 
-/* Chart Section (Clean White) */
+/* Chart Section */
 .chart-container-card {
   background: #FFFFFF;
   border: 1px solid var(--border-color);
@@ -463,9 +517,9 @@ body {
   display: none;
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(4px);
-  z-index: 40;
+  z-index: 60;
   align-items: center;
   justify-content: center;
   flex-direction: column;
@@ -486,7 +540,6 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Footer note */
 .app-footer {
   text-align: center;
   font-size: 0.7rem;
