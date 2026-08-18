@@ -1,6 +1,5 @@
 /**
- * ALPHA-PREDICT AI: Mobile-Optimized Canvas Chart Engine
- * Support Touch Gestures, Fast 60FPS Rendering, US Equities ($)
+ * ALPHA-PREDICT AI: White Minimal Theme Canvas Chart Engine
  */
 
 class StockChartEngine {
@@ -11,14 +10,12 @@ class StockChartEngine {
 
     this.chartData = [];
     this.forecastData = null;
-    this.currency = 'USD';
 
     // View Options
-    this.chartType = 'candle';
+    this.chartType = 'candle'; // 'candle' | 'line'
     this.showForecast = true;
     this.showSMA = true;
-    this.showBollinger = true;
-    this.timeRange = '3mo'; // Mobile default: 3 months for optimal candle width
+    this.timeRange = '3mo';
 
     // Interaction
     this.mouseX = -1;
@@ -67,8 +64,7 @@ class StockChartEngine {
     }, { passive: true });
 
     this.canvas.addEventListener('touchend', () => {
-      // Keep tooltip visible for 2 seconds then fade
-      setTimeout(() => this.clearHover(), 2500);
+      setTimeout(() => this.clearHover(), 2000);
     });
   }
 
@@ -86,7 +82,7 @@ class StockChartEngine {
     const dpr = window.devicePixelRatio || 1;
 
     this.width = rect.width;
-    this.height = rect.height || 320;
+    this.height = rect.height || 330;
 
     this.canvas.width = this.width * dpr;
     this.canvas.height = this.height * dpr;
@@ -97,10 +93,9 @@ class StockChartEngine {
     this.render();
   }
 
-  setData(stockDetail) {
-    this.rawCandles = stockDetail.chart_data || [];
-    this.forecastData = stockDetail.future_forecast || null;
-    this.currency = (stockDetail.meta && stockDetail.meta.currency) ? stockDetail.meta.currency : 'USD';
+  setData(candles, forecast) {
+    this.rawCandles = candles || [];
+    this.forecastData = forecast || null;
     this.applyTimeFilter();
     this.render();
   }
@@ -140,7 +135,10 @@ class StockChartEngine {
     const w = this.width;
     const h = this.height;
 
+    // Clear White Canvas
     ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, w, h);
 
     const padding = { top: 20, right: 48, bottom: 25, left: 10 };
     const mainHeight = h * 0.70 - padding.top;
@@ -186,17 +184,12 @@ class StockChartEngine {
     // 1. Grid & Price Labels
     this.drawGrid(padding, mainHeight, minPrice, maxPrice, w);
 
-    // 2. Bollinger Bands
-    if (this.showBollinger) {
-      this.drawBollinger(getX, getY, histLen);
-    }
-
-    // 3. SMA (20, 60)
+    // 2. SMA 20 Line
     if (this.showSMA) {
       this.drawSMA(getX, getY, histLen);
     }
 
-    // 4. Historical Candles or Line
+    // 3. Historical Candles or Line
     if (this.chartType === 'candle') {
       this.drawCandles(getX, getY, getVolY, volTop, volHeight, stepX);
     } else {
@@ -204,12 +197,12 @@ class StockChartEngine {
       this.drawVolume(getX, getVolY, volTop, volHeight, stepX);
     }
 
-    // 5. AI Future Prediction Cloud
+    // 4. AI Future Forecast Cloud
     if (this.showForecast && forecastLen > 0) {
       this.drawForecast(getX, getY, histLen, forecastLen);
     }
 
-    // 6. Crosshair & Mobile Tooltip
+    // 5. Crosshair & Tooltip
     if (this.isHovering && this.mouseX >= padding.left && this.mouseX <= w - padding.right) {
       this.drawCrosshair(getX, getY, padding, w, h, mainHeight, minPrice, maxPrice, histLen, forecastLen);
     }
@@ -217,10 +210,10 @@ class StockChartEngine {
 
   drawGrid(pad, mainH, minP, maxP, w) {
     const ctx = this.ctx;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.strokeStyle = '#F1F5F9';
     ctx.lineWidth = 1;
     ctx.font = '9px Inter, sans-serif';
-    ctx.fillStyle = '#64748B';
+    ctx.fillStyle = '#94A3B8';
     ctx.textAlign = 'left';
 
     const levels = 4;
@@ -246,14 +239,14 @@ class StockChartEngine {
       const isUp = c.close >= c.open;
       const color = isUp ? '#10B981' : '#EF4444';
 
-      // Volume
+      // Volume Bar
       const volY = getVolY(c.volume);
-      ctx.fillStyle = isUp ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)';
+      ctx.fillStyle = isUp ? '#D1FAE5' : '#FEE2E2';
       ctx.fillRect(x - candleWidth / 2, volY, candleWidth, volTop + volH - volY);
 
       // Wick
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.moveTo(x, getY(c.high));
       ctx.lineTo(x, getY(c.low));
@@ -263,14 +256,14 @@ class StockChartEngine {
       const openY = getY(c.open);
       const closeY = getY(c.close);
       ctx.fillStyle = color;
-      ctx.fillRect(x - candleWidth / 2, Math.min(openY, closeY), candleWidth, Math.max(1, Math.abs(openY - closeY)));
+      ctx.fillRect(x - candleWidth / 2, Math.min(openY, closeY), candleWidth, Math.max(1.5, Math.abs(openY - closeY)));
     });
   }
 
   drawLine(getX, getY, len) {
     const ctx = this.ctx;
-    ctx.strokeStyle = '#6366F1';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#2563EB';
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
 
     for (let i = 0; i < len; i++) {
@@ -289,62 +282,20 @@ class StockChartEngine {
       const x = getX(i);
       const isUp = c.close >= c.open;
       const volY = getVolY(c.volume);
-      ctx.fillStyle = isUp ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+      ctx.fillStyle = isUp ? '#D1FAE5' : '#FEE2E2';
       ctx.fillRect(x - barWidth / 2, volY, barWidth, volTop + volH - volY);
     });
   }
 
   drawSMA(getX, getY, len) {
     const ctx = this.ctx;
-    const lines = [
-      { key: 'sma20', color: '#06B6D4', width: 1.2 },
-      { key: 'sma60', color: '#EC4899', width: 1.0 }
-    ];
-
-    lines.forEach(({ key, color, width }) => {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = width;
-      ctx.beginPath();
-      let started = false;
-
-      for (let i = 0; i < len; i++) {
-        const val = this.chartData[i][key];
-        if (val != null) {
-          const x = getX(i);
-          const y = getY(val);
-          if (!started) { ctx.moveTo(x, y); started = true; }
-          else { ctx.lineTo(x, y); }
-        }
-      }
-      ctx.stroke();
-    });
-  }
-
-  drawBollinger(getX, getY, len) {
-    const ctx = this.ctx;
-    ctx.strokeStyle = 'rgba(139, 92, 246, 0.35)';
-    ctx.lineWidth = 0.8;
-    ctx.setLineDash([2, 2]);
-
-    // Upper
+    ctx.strokeStyle = '#F59E0B';
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
     let started = false;
-    for (let i = 0; i < len; i++) {
-      const val = this.chartData[i].bb_upper;
-      if (val != null) {
-        const x = getX(i);
-        const y = getY(val);
-        if (!started) { ctx.moveTo(x, y); started = true; }
-        else { ctx.lineTo(x, y); }
-      }
-    }
-    ctx.stroke();
 
-    // Lower
-    ctx.beginPath();
-    started = false;
     for (let i = 0; i < len; i++) {
-      const val = this.chartData[i].bb_lower;
+      const val = this.chartData[i].sma20;
       if (val != null) {
         const x = getX(i);
         const y = getY(val);
@@ -353,7 +304,6 @@ class StockChartEngine {
       }
     }
     ctx.stroke();
-    ctx.setLineDash([]);
   }
 
   drawForecast(getX, getY, histLen, forecastLen) {
@@ -362,7 +312,7 @@ class StockChartEngine {
     const startX = getX(histLen - 1);
     const startY = getY(lastHist.close);
 
-    // 1. Shaded Cloud
+    // 1. Shaded Blue Cloud
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     for (let i = 0; i < forecastLen; i++) {
@@ -374,15 +324,15 @@ class StockChartEngine {
     ctx.closePath();
 
     const cloudGrad = ctx.createLinearGradient(startX, 0, getX(histLen + forecastLen - 1), 0);
-    cloudGrad.addColorStop(0, 'rgba(6, 182, 212, 0.25)');
-    cloudGrad.addColorStop(1, 'rgba(139, 92, 246, 0.08)');
+    cloudGrad.addColorStop(0, 'rgba(37, 99, 235, 0.18)');
+    cloudGrad.addColorStop(1, 'rgba(37, 99, 235, 0.04)');
     ctx.fillStyle = cloudGrad;
     ctx.fill();
 
     // 2. Expected Path Line
-    ctx.setLineDash([4, 2]);
-    ctx.strokeStyle = '#06B6D4';
-    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = '#2563EB';
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
     ctx.moveTo(startX, startY);
 
@@ -392,9 +342,9 @@ class StockChartEngine {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Divider
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-    ctx.lineWidth = 0.8;
+    // Vertical Divider
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.lineWidth = 1;
     ctx.setLineDash([2, 3]);
     ctx.beginPath();
     ctx.moveTo(startX, 15);
@@ -413,7 +363,7 @@ class StockChartEngine {
     const idx = Math.max(0, Math.min(totalPoints - 1, rawIdx));
     const targetX = getX(idx);
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.strokeStyle = '#94A3B8';
     ctx.lineWidth = 1;
     ctx.setLineDash([2, 2]);
 
@@ -432,15 +382,14 @@ class StockChartEngine {
         <span>${c.date.slice(5)}</span>
         <span>종가: <strong style="color: ${isUp ? '#10B981' : '#EF4444'};">$${c.close.toFixed(2)}</strong></span>
         <span>거래량: <strong>${(c.volume / 1000000).toFixed(1)}M</strong></span>
-        <span>RSI: <strong>${c.rsi || '-'}</strong></span>
       `;
     } else {
       const fIdx = idx - histLen;
       const fDate = this.forecastData.dates[fIdx];
       const expected = this.forecastData.expected[fIdx];
       this.tooltip.innerHTML = `
-        <span style="color: var(--accent-cyan);">예측일: <strong>${fDate.slice(5)}</strong></span>
-        <span>예상가: <strong style="color: #06B6D4;">$${expected.toFixed(2)}</strong></span>
+        <span style="color: #2563EB; font-weight:700;">예측일: ${fDate.slice(5)}</span>
+        <span>예상가: <strong style="color: #2563EB;">$${expected.toFixed(2)}</strong></span>
         <span>구간: <strong>$${this.forecastData.lower[fIdx].toFixed(1)}~$${this.forecastData.upper[fIdx].toFixed(1)}</strong></span>
       `;
     }

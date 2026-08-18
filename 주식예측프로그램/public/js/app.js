@@ -1,375 +1,377 @@
 /**
- * ALPHA-PREDICT AI: Mobile App Controller (US Stocks Only)
+ * ALPHA-PREDICT AI: Minimal White Theme Controller
+ * Supports ANY NASDAQ/US Ticker Search + 1d/7d/15d/30d Forecasts + Up/Down Probability
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  const MobileApp = {
-    stocks: [],
-    selectedCode: 'NVDA',
-    favorites: JSON.parse(localStorage.getItem('alpha_us_favs') || '["NVDA", "TSLA", "AAPL"]'),
+  const App = {
+    currentTicker: 'NVDA',
     chartEngine: null,
-    searchKeyword: '',
 
     async init() {
       this.initElements();
       this.initChart();
       this.bindEvents();
-      await this.loadData();
+      await this.loadStock('NVDA');
     },
 
     initElements() {
       this.el = {
-        lastUpdatedTime: document.getElementById('lastUpdatedTime'),
-        stockChipsContainer: document.getElementById('stockChipsContainer'),
         searchInput: document.getElementById('searchInput'),
+        searchForm: document.getElementById('searchForm'),
+        popularChips: document.querySelectorAll('.p-chip'),
+        loadingOverlay: document.getElementById('loadingOverlay'),
 
-        // Hero Card
-        heroStockName: document.getElementById('heroStockName'),
-        heroTickerTag: document.getElementById('heroTickerTag'),
-        heroCategoryLabel: document.getElementById('heroCategoryLabel'),
-        favToggleBtn: document.getElementById('favToggleBtn'),
-        currentPriceVal: document.getElementById('currentPriceVal'),
-        priceDiffBadge: document.getElementById('priceDiffBadge'),
+        // Header Card
+        tickerName: document.getElementById('tickerName'),
+        companyName: document.getElementById('companyName'),
+        marketTag: document.getElementById('marketTag'),
+        currentPrice: document.getElementById('currentPrice'),
+        priceChangePill: document.getElementById('priceChangePill'),
 
-        // Compact Gauge
-        gaugeValCircle: document.getElementById('gaugeValCircle'),
-        gaugeScoreText: document.getElementById('gaugeScoreText'),
-        gaugeSignalText: document.getElementById('gaugeSignalText'),
+        // Up/Down Probability
+        probUpText: document.getElementById('probUpText'),
+        probDownText: document.getElementById('probDownText'),
+        probBarUp: document.getElementById('probBarUp'),
+        probBarDown: document.getElementById('probBarDown'),
 
-        // Forecast Grid
-        forecast7dPrice: document.getElementById('forecast7dPrice'),
-        forecast7dPct: document.getElementById('forecast7dPct'),
-        forecast30dPrice: document.getElementById('forecast30dPrice'),
-        forecast30dPct: document.getElementById('forecast30dPct'),
-
-        // Segmented Tabs
-        segBtns: document.querySelectorAll('.seg-btn'),
-        tabPanels: document.querySelectorAll('.tab-panel'),
-        bottomNavBtns: document.querySelectorAll('.nav-tab-item'),
-
-        // Deep Analysis Bars
-        scoreTrendBar: document.getElementById('scoreTrendBar'),
-        scoreTrendVal: document.getElementById('scoreTrendVal'),
-        scoreMomentumBar: document.getElementById('scoreMomentumBar'),
-        scoreMomentumVal: document.getElementById('scoreMomentumVal'),
-        scoreSupportBar: document.getElementById('scoreSupportBar'),
-        scoreSupportVal: document.getElementById('scoreSupportVal'),
-        scoreVolumeBar: document.getElementById('scoreVolumeBar'),
-        scoreVolumeVal: document.getElementById('scoreVolumeVal'),
-        aiTakeawaysList: document.getElementById('aiTakeawaysList'),
-
-        // Indicators Table
-        indRsiVal: document.getElementById('indRsiVal'),
-        indRsiBadge: document.getElementById('indRsiBadge'),
-        indMacdVal: document.getElementById('indMacdVal'),
-        indMacdBadge: document.getElementById('indMacdBadge'),
-        indSmaVal: document.getElementById('indSmaVal'),
-        indSmaBadge: document.getElementById('indSmaBadge'),
-        indBbVal: document.getElementById('indBbVal'),
-        indBbBadge: document.getElementById('indBbBadge'),
-
-        // All Stocks List Panel
-        allStocksListContainer: document.getElementById('allStocksListContainer'),
-        backtestAccuracy: document.getElementById('backtestAccuracy'),
+        // 4 Predictions (1d, 7d, 15d, 30d)
+        pred1dPrice: document.getElementById('pred1dPrice'),
+        pred1dPct: document.getElementById('pred1dPct'),
+        pred7dPrice: document.getElementById('pred7dPrice'),
+        pred7dPct: document.getElementById('pred7dPct'),
+        pred15dPrice: document.getElementById('pred15dPrice'),
+        pred15dPct: document.getElementById('pred15dPct'),
+        pred30dPrice: document.getElementById('pred30dPrice'),
+        pred30dPct: document.getElementById('pred30dPct'),
       };
     },
 
     initChart() {
-      this.chartEngine = new StockChartEngine('mainChartCanvas', 'touchTooltip');
+      this.chartEngine = new StockChartEngine('mainChartCanvas', 'whiteTooltip');
     },
 
     bindEvents() {
-      // Search
-      this.el.searchInput.addEventListener('input', (e) => {
-        this.searchKeyword = e.target.value.trim().toLowerCase();
-        this.renderChips();
-        this.renderAllStocksList();
+      // Search Submit
+      this.el.searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const ticker = this.el.searchInput.value.trim().toUpperCase();
+        if (ticker) {
+          this.loadStock(ticker);
+        }
       });
 
-      // Favorite Toggle in Hero
-      this.el.favToggleBtn.addEventListener('click', () => {
-        this.toggleFavorite(this.selectedCode);
+      // Quick Chips Click
+      this.el.popularChips.forEach(chip => {
+        chip.addEventListener('click', (e) => {
+          this.el.popularChips.forEach(c => c.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          const ticker = e.currentTarget.dataset.ticker;
+          this.el.searchInput.value = ticker;
+          this.loadStock(ticker);
+        });
       });
 
-      // Chart Range Chips
-      document.querySelectorAll('.r-chip').forEach(btn => {
+      // Chart Range Buttons
+      document.querySelectorAll('.r-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-          document.querySelectorAll('.r-chip').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.r-btn').forEach(b => b.classList.remove('active'));
           e.currentTarget.classList.add('active');
           this.chartEngine.setTimeRange(e.currentTarget.dataset.range);
         });
       });
 
-      // Chart Type Toggles
-      document.getElementById('toggleForecast').addEventListener('click', (e) => {
-        const isActive = e.currentTarget.classList.toggle('active');
-        this.chartEngine.toggleOption('showForecast', isActive);
-      });
-      document.getElementById('toggleType').addEventListener('click', (e) => {
+      // Chart Type Buttons
+      document.getElementById('btnToggleType').addEventListener('click', (e) => {
         const isLine = e.currentTarget.classList.toggle('active');
         e.currentTarget.textContent = isLine ? '라인' : '캔들';
         this.chartEngine.setChartType(isLine ? 'line' : 'candle');
       });
 
-      // Segmented Tabs
-      this.el.segBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          this.switchTab(e.currentTarget.dataset.tab);
-        });
-      });
-
-      // Bottom Navigation Tabs
-      this.el.bottomNavBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const item = e.target.closest('.nav-tab-item');
-          if (!item) return;
-          const tabKey = item.dataset.target;
-          this.switchTab(tabKey);
-        });
+      document.getElementById('btnToggleForecast').addEventListener('click', (e) => {
+        const isActive = e.currentTarget.classList.toggle('active');
+        this.chartEngine.toggleOption('showForecast', isActive);
       });
     },
 
-    switchTab(tabKey) {
-      this.el.segBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tabKey));
-      this.el.tabPanels.forEach(p => p.classList.toggle('active', p.id === `tab-${tabKey}`));
-      this.el.bottomNavBtns.forEach(b => b.classList.toggle('active', b.dataset.target === tabKey));
-      
-      if (tabKey === 'chart') {
-        setTimeout(() => this.chartEngine.handleResize(), 50);
+    showLoading(show = true) {
+      if (this.el.loadingOverlay) {
+        this.el.loadingOverlay.style.display = show ? 'flex' : 'none';
       }
     },
 
-    async loadData() {
-      try {
-        const res = await fetch('data/latest_summary.json?t=' + Date.now());
-        if (!res.ok) throw new Error('데이터 로드 실패');
-        const data = await res.json();
+    async loadStock(ticker) {
+      this.showLoading(true);
+      ticker = ticker.toUpperCase();
+      this.currentTicker = ticker;
 
-        this.stocks = data.stocks || [];
-        if (data.updated_at) {
-          this.el.lastUpdatedTime.textContent = data.updated_at.split(' ')[0];
-        }
-
-        this.renderChips();
-        this.renderAllStocksList();
-
-        // Select first stock
-        if (this.stocks.length > 0) {
-          const initialCode = this.stocks[0].code;
-          this.selectStock(initialCode);
-        }
-      } catch (err) {
-        console.error('데이터 로드 중 오류:', err);
-      }
-    },
-
-    renderChips() {
-      const container = this.el.stockChipsContainer;
-      container.innerHTML = '';
-
-      const filtered = this.stocks.filter(s => {
-        if (!this.searchKeyword) return true;
-        return s.name.toLowerCase().includes(this.searchKeyword) ||
-               s.code.toLowerCase().includes(this.searchKeyword) ||
-               s.category.toLowerCase().includes(this.searchKeyword);
+      // Update popular chip highlight
+      this.el.popularChips.forEach(c => {
+        c.classList.toggle('active', c.dataset.ticker === ticker);
       });
-
-      filtered.forEach(s => {
-        const isSelected = s.code === this.selectedCode;
-        const isUp = s.diff >= 0;
-
-        const chip = document.createElement('div');
-        chip.className = `stock-chip ${isSelected ? 'active' : ''}`;
-        chip.dataset.code = s.code;
-
-        chip.innerHTML = `
-          <span class="chip-ticker">${s.code}</span>
-          <span class="chip-change ${isUp ? 'bullish' : 'bearish'}">
-            ${isUp ? '+' : ''}${s.change_pct.toFixed(1)}%
-          </span>
-        `;
-
-        chip.addEventListener('click', () => {
-          this.selectStock(s.code);
-        });
-
-        container.appendChild(chip);
-      });
-    },
-
-    renderAllStocksList() {
-      const container = this.el.allStocksListContainer;
-      container.innerHTML = '';
-
-      this.stocks.forEach(s => {
-        const isSelected = s.code === this.selectedCode;
-        const isUp = s.diff >= 0;
-        const scoreClass = s.ai_score >= 65 ? 'bullish' : (s.ai_score >= 45 ? 'neutral' : 'bearish');
-
-        const card = document.createElement('div');
-        card.className = `stock-list-card ${isSelected ? 'active' : ''}`;
-        card.innerHTML = `
-          <div>
-            <strong style="font-size:0.85rem;">${s.code}</strong>
-            <div style="font-size:0.7rem; color:var(--text-sub);">${s.name}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-weight:700; font-size:0.85rem;">$${s.current_price.toFixed(2)}</div>
-            <span style="font-size:0.7rem;" class="${isUp ? 'bullish' : 'bearish'}">
-              ${isUp ? '▲ +' : '▼ '}${s.change_pct.toFixed(2)}%
-            </span>
-          </div>
-          <div>
-            <span class="badge-status ${scoreClass}">AI ${s.ai_score}점</span>
-          </div>
-        `;
-
-        card.addEventListener('click', () => {
-          this.selectStock(s.code);
-          this.switchTab('chart');
-        });
-
-        container.appendChild(card);
-      });
-    },
-
-    toggleFavorite(code) {
-      if (this.favorites.includes(code)) {
-        this.favorites = this.favorites.filter(c => c !== code);
-      } else {
-        this.favorites.push(code);
-      }
-      localStorage.setItem('alpha_us_favs', JSON.stringify(this.favorites));
-      this.el.favToggleBtn.classList.toggle('active', this.favorites.includes(code));
-    },
-
-    async selectStock(code) {
-      this.selectedCode = code;
-      this.renderChips();
-
-      // Scroll chip into view smoothly
-      const activeChip = this.el.stockChipsContainer.querySelector(`.stock-chip[data-code="${code}"]`);
-      if (activeChip) {
-        activeChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-      }
 
       try {
-        const res = await fetch(`data/predictions/${code}.json?t=` + Date.now());
-        if (!res.ok) throw new Error('종목 데이터 로드 실패');
-        const detail = await res.json();
-        this.renderStockDetail(detail);
+        // 1. Try local JSON first (pre-computed)
+        let data = null;
+        try {
+          const res = await fetch(`data/predictions/${ticker}.json?t=` + Date.now());
+          if (res.ok) {
+            data = await res.json();
+          }
+        } catch (e) {
+          // ignore, fallback to live fetch
+        }
+
+        // 2. If not in local JSON, fetch LIVE from Yahoo Finance
+        if (!data) {
+          data = await this.fetchLiveStockData(ticker);
+        }
+
+        if (data) {
+          this.renderStock(data);
+        } else {
+          alert(`[${ticker}] 종목 데이터를 가져올 수 없습니다. 올바른 미국 티커를 입력해주세요.`);
+        }
       } catch (err) {
         console.error('종목 로드 에러:', err);
+        alert(`데이터를 불러오는 중 오류가 발생했습니다: ${err.message}`);
+      } finally {
+        this.showLoading(false);
       }
     },
 
-    renderStockDetail(detail) {
-      const meta = detail.meta;
-      const price = detail.price_summary;
-      const ai = detail.ai_analysis;
-      const future = detail.future_forecast;
-      const backtest = detail.backtest;
+    async fetchLiveStockData(ticker) {
+      // Direct Yahoo Finance Chart API with CORS fallback
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1y`;
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
 
-      // 1. Hero Info
-      this.el.heroStockName.textContent = meta.name.split('(')[0].trim();
-      this.el.heroTickerTag.textContent = meta.ticker;
-      this.el.heroCategoryLabel.textContent = meta.category;
-      this.el.favToggleBtn.classList.toggle('active', this.favorites.includes(meta.code));
+      let response = null;
+      try {
+        response = await fetch(proxyUrl);
+      } catch (e) {
+        response = await fetch(yahooUrl);
+      }
 
-      this.el.currentPriceVal.textContent = `$${price.current_price.toFixed(2)}`;
+      if (!response.ok) throw new Error('종목을 찾을 수 없습니다');
+      const json = await response.json();
+
+      const result = json.chart && json.chart.result && json.chart.result[0];
+      if (!result) throw new Error('유효하지 않은 종목 데이터');
+
+      const meta = result.meta;
+      const timestamps = result.timestamp || [];
+      const quotes = result.indicators.quote[0] || {};
+
+      const candles = [];
+      for (let i = 0; i < timestamps.length; i++) {
+        const o = quotes.open[i];
+        const h = quotes.high[i];
+        const l = quotes.low[i];
+        const c = quotes.close[i];
+        const v = quotes.volume[i] || 0;
+
+        if (o != null && h != null && l != null && c != null) {
+          const dateStr = new Date(timestamps[i] * 1000).toISOString().split('T')[0];
+          candles.push({
+            date: dateStr,
+            open: Math.round(o * 100) / 100,
+            high: Math.round(h * 100) / 100,
+            low: Math.round(l * 100) / 100,
+            close: Math.round(c * 100) / 100,
+            volume: v,
+            sma20: null
+          });
+        }
+      }
+
+      // Calculate SMA 20
+      for (let i = 0; i < candles.length; i++) {
+        if (i >= 19) {
+          const sum = candles.slice(i - 19, i + 1).reduce((acc, cur) => acc + cur.close, 0);
+          candles[i].sma20 = Math.round((sum / 20) * 100) / 100;
+        }
+      }
+
+      // Run Client-Side AI Prediction Engine
+      const forecast = this.computeClientPrediction(candles);
+
+      const latest = candles[candles.length - 1];
+      const prev = candles[candles.length - 2] || latest;
+      const diff = latest.close - prev.close;
+      const changePct = (diff / prev.close) * 100;
+
+      return {
+        meta: {
+          code: ticker,
+          ticker: ticker,
+          name: meta.shortName || meta.symbol || ticker,
+          market: meta.exchangeName || 'NASDAQ',
+          currency: 'USD'
+        },
+        price_summary: {
+          current_price: latest.close,
+          diff: diff,
+          change_pct: changePct,
+          volume: latest.volume
+        },
+        future_forecast: forecast.future_forecast,
+        probability: forecast.probability,
+        predictions_4period: forecast.predictions_4period,
+        chart_data: candles
+      };
+    },
+
+    computeClientPrediction(candles) {
+      if (candles.length < 30) {
+        return {
+          future_forecast: { dates: [], expected: [], upper: [], lower: [] },
+          probability: { up: 50, down: 50 },
+          predictions_4period: {}
+        };
+      }
+
+      const lastClose = candles[candles.length - 1].close;
+      const lastDateStr = candles[candles.length - 1].date;
+      const n = candles.length;
+
+      // Moving Averages & Trend
+      const sma20 = candles[n - 1].sma20 || lastClose;
+      const return5d = (lastClose - candles[n - 5].close) / candles[n - 5].close;
+      const return20d = (lastClose - candles[n - 20].close) / candles[n - 20].close;
+
+      // Volatility (Average True Range estimate)
+      let sumVol = 0;
+      for (let i = n - 14; i < n; i++) {
+        sumVol += (candles[i].high - candles[i].low);
+      }
+      const dailyVol = Math.max(sumVol / 14, lastClose * 0.015);
+
+      // Up/Down Probability Score (0 ~ 100)
+      let bullScore = 50;
+      if (lastClose > sma20) bullScore += 12;
+      else bullScore -= 12;
+
+      if (return5d > 0) bullScore += 8;
+      else bullScore -= 8;
+
+      if (return20d > 0) bullScore += 6;
+      else bullScore -= 6;
+
+      const upProb = Math.min(88, Math.max(15, Math.round(bullScore)));
+      const downProb = 100 - upProb;
+
+      // Future 30 Days Forecast Generation
+      const futureDates = [];
+      const expectedArr = [];
+      const upperArr = [];
+      const lowerArr = [];
+
+      let curr = new Date(lastDateStr);
+      const trendSlope = (return20d * 0.4) / 20; // Daily drift
+
+      for (let i = 1; i <= 30; i++) {
+        curr.setDate(curr.getDate() + 1);
+        if (curr.getDay() === 0 || curr.getDay() === 6) {
+          i--;
+          continue;
+        }
+        futureDates.push(curr.toISOString().split('T')[0]);
+
+        // Expected Price Path
+        const drift = trendSlope * i;
+        const pred = lastClose * (1 + drift);
+        const spread = dailyVol * Math.sqrt(i) * 1.4;
+
+        expectedArr.push(Math.round(pred * 100) / 100);
+        upperArr.push(Math.round((pred + spread) * 100) / 100);
+        lowerArr.push(Math.round(Math.max(pred - spread, pred * 0.5) * 100) / 100);
+      }
+
+      // 4 Target Periods: 1일(idx 0), 7일(idx 6), 15일(idx 14), 30일(idx 29)
+      const getPeriodPred = (idx) => {
+        const p = expectedArr[idx] || lastClose;
+        const pct = ((p - lastClose) / lastClose) * 100;
+        return { price: p, pct: Math.round(pct * 100) / 100 };
+      };
+
+      return {
+        future_forecast: {
+          dates: futureDates,
+          expected: expectedArr,
+          upper: upperArr,
+          lower: lowerArr
+        },
+        probability: { up: upProb, down: downProb },
+        predictions_4period: {
+          p1d: getPeriodPred(0),
+          p7d: getPeriodPred(6),
+          p15d: getPeriodPred(14),
+          p30d: getPeriodPred(Math.min(29, expectedArr.length - 1))
+        }
+      };
+    },
+
+    renderStock(data) {
+      const meta = data.meta;
+      const price = data.price_summary;
+      const forecast = data.future_forecast;
+      const curPrice = price.current_price;
+
+      // 1. Stock Title & Price
+      this.el.tickerName.textContent = meta.code;
+      this.el.companyName.textContent = meta.name ? `· ${meta.name}` : '';
+      this.el.marketTag.textContent = meta.market;
+      this.el.currentPrice.textContent = `$${curPrice.toFixed(2)}`;
+
       const isUp = price.diff >= 0;
-      this.el.priceDiffBadge.className = `price-diff-badge ${isUp ? 'bullish' : 'bearish'}`;
-      this.el.priceDiffBadge.innerHTML = `${isUp ? '▲ +' : '▼ '}$${Math.abs(price.diff).toFixed(2)} (${isUp ? '+' : ''}${price.change_pct.toFixed(2)}%)`;
+      this.el.priceChangePill.className = `price-change-pill ${isUp ? 'bullish' : 'bearish'}`;
+      this.el.priceChangePill.innerHTML = `${isUp ? '▲ +' : '▼ '}$${Math.abs(price.diff).toFixed(2)} (${isUp ? '+' : ''}${price.change_pct.toFixed(2)}%)`;
 
-      // 2. Compact AI Gauge
-      this.el.gaugeScoreText.textContent = ai.score;
-      const maxDash = 126;
-      const offset = maxDash - (maxDash * (ai.score / 100));
-      this.el.gaugeValCircle.style.strokeDashoffset = offset;
-
-      let scoreColor = '#10B981';
-      let signalClass = 'bullish';
-      if (ai.score < 45) {
-        scoreColor = '#EF4444';
-        signalClass = 'bearish';
-      } else if (ai.score < 65) {
-        scoreColor = '#F59E0B';
-        signalClass = 'neutral';
+      // 2. Up/Down Probability
+      let upProb = 65;
+      let downProb = 35;
+      if (data.probability) {
+        upProb = data.probability.up;
+        downProb = data.probability.down;
+      } else if (data.ai_analysis) {
+        upProb = data.ai_analysis.score;
+        downProb = 100 - upProb;
       }
-      this.el.gaugeValCircle.style.stroke = scoreColor;
-      this.el.gaugeSignalText.className = `gauge-signal ${signalClass}`;
-      this.el.gaugeSignalText.textContent = ai.signal_ko;
+      this.el.probUpText.textContent = `상승 확률 ${upProb}%`;
+      this.el.probDownText.textContent = `하락 확률 ${downProb}%`;
+      this.el.probBarUp.style.width = `${upProb}%`;
+      this.el.probBarDown.style.width = `${downProb}%`;
 
-      // 3. Quick Forecast Grid
-      this.el.forecast7dPrice.textContent = `$${price.pred_7d_price.toFixed(2)}`;
-      const is7Up = price.pred_7d_pct >= 0;
-      this.el.forecast7dPct.className = `mini-card-pct ${is7Up ? 'bullish' : 'bearish'}`;
-      this.el.forecast7dPct.textContent = `${is7Up ? '▲ +' : '▼ '}${price.pred_7d_pct.toFixed(2)}%`;
-
-      this.el.forecast30dPrice.textContent = `$${price.pred_30d_price.toFixed(2)}`;
-      const is30Up = price.pred_30d_pct >= 0;
-      this.el.forecast30dPct.className = `mini-card-pct ${is30Up ? 'bullish' : 'bearish'}`;
-      this.el.forecast30dPct.textContent = `${is30Up ? '▲ +' : '▼ '}${price.pred_30d_pct.toFixed(2)}%`;
-
-      // 4. 4-Pillar Score Bars
-      const bd = ai.breakdown || {};
-      this.updateBar(this.el.scoreTrendBar, this.el.scoreTrendVal, bd.trend || 0, 25, '#6366F1');
-      this.updateBar(this.el.scoreMomentumBar, this.el.scoreMomentumVal, bd.momentum || 0, 25, '#06B6D4');
-      this.updateBar(this.el.scoreSupportBar, this.el.scoreSupportVal, bd.support || 0, 25, '#8B5CF6');
-      this.updateBar(this.el.scoreVolumeBar, this.el.scoreVolumeVal, bd.volume || 0, 25, '#10B981');
-
-      // AI Takeaways
-      this.el.aiTakeawaysList.innerHTML = '';
-      if (ai.key_takeaways && ai.key_takeaways.length > 0) {
-        ai.key_takeaways.forEach(r => {
-          const li = document.createElement('li');
-          li.textContent = r;
-          this.el.aiTakeawaysList.appendChild(li);
-        });
+      // 3. 4 AI Predictions (1일, 7일, 15일, 30일)
+      if (data.predictions_4period) {
+        this.renderPredCard(this.el.pred1dPrice, this.el.pred1dPct, data.predictions_4period.p1d);
+        this.renderPredCard(this.el.pred7dPrice, this.el.pred7dPct, data.predictions_4period.p7d);
+        this.renderPredCard(this.el.pred15dPrice, this.el.pred15dPct, data.predictions_4period.p15d);
+        this.renderPredCard(this.el.pred30dPrice, this.el.pred30dPct, data.predictions_4period.p30d);
+      } else if (forecast && forecast.expected && forecast.expected.length > 0) {
+        const getP = (idx) => {
+          const p = forecast.expected[idx] || curPrice;
+          const pct = ((p - curPrice) / curPrice) * 100;
+          return { price: p, pct: Math.round(pct * 100) / 100 };
+        };
+        this.renderPredCard(this.el.pred1dPrice, this.el.pred1dPct, getP(0));
+        this.renderPredCard(this.el.pred7dPrice, this.el.pred7dPct, getP(6));
+        this.renderPredCard(this.el.pred15dPrice, this.el.pred15dPct, getP(14));
+        this.renderPredCard(this.el.pred30dPrice, this.el.pred30dPct, getP(Math.min(29, forecast.expected.length - 1)));
       }
 
-      // 5. Indicators Table
-      const lastCandle = detail.chart_data ? detail.chart_data[detail.chart_data.length - 1] : {};
-      if (lastCandle.rsi) {
-        this.el.indRsiVal.textContent = `${lastCandle.rsi}p`;
-        this.setBadge(this.el.indRsiBadge, lastCandle.rsi >= 70 ? '과열' : (lastCandle.rsi <= 35 ? '과매도' : '적정'), lastCandle.rsi >= 70 ? 'bearish' : (lastCandle.rsi <= 35 ? 'bullish' : 'neutral'));
-      }
-      if (lastCandle.macd != null) {
-        const isMacdBull = lastCandle.macd >= lastCandle.macd_signal;
-        this.el.indMacdVal.textContent = `${lastCandle.macd.toFixed(1)}`;
-        this.setBadge(this.el.indMacdBadge, isMacdBull ? '골든크로스' : '데드크로스', isMacdBull ? 'bullish' : 'bearish');
-      }
-      if (lastCandle.sma20) {
-        const isSmaBull = price.current_price >= lastCandle.sma20;
-        this.el.indSmaVal.textContent = `$${lastCandle.sma20.toFixed(1)}`;
-        this.setBadge(this.el.indSmaBadge, isSmaBull ? '20선 상회' : '20선 하회', isSmaBull ? 'bullish' : 'bearish');
-      }
-      if (lastCandle.bb_upper && lastCandle.bb_lower) {
-        this.el.indBbVal.textContent = `$${lastCandle.bb_lower.toFixed(0)}~$${lastCandle.bb_upper.toFixed(0)}`;
-        this.setBadge(this.el.indBbBadge, '순항', 'neutral');
-      }
-
-      // 6. Backtest
-      if (backtest && this.el.backtestAccuracy) {
-        this.el.backtestAccuracy.textContent = `${backtest.accuracy_pct}%`;
-      }
-
-      // 7. Render Chart
-      this.chartEngine.setData(detail);
+      // 4. Render Chart
+      this.chartEngine.setData(data.chart_data, forecast);
     },
 
-    updateBar(barEl, valEl, val, max, color) {
-      const pct = (val / max) * 100;
-      barEl.style.width = `${pct}%`;
-      barEl.style.backgroundColor = color;
-      valEl.textContent = `${val}/${max}점`;
-    },
-
-    setBadge(badgeEl, text, type) {
-      badgeEl.className = `badge-status ${type}`;
-      badgeEl.textContent = text;
+    renderPredCard(priceEl, pctEl, pData) {
+      if (!pData) return;
+      priceEl.textContent = `$${pData.price.toFixed(2)}`;
+      const isUp = pData.pct >= 0;
+      pctEl.className = `pred-pct-val ${isUp ? 'bullish' : 'bearish'}`;
+      pctEl.textContent = `${isUp ? '▲ +' : '▼ '}${pData.pct.toFixed(2)}%`;
     }
   };
 
-  MobileApp.init();
+  App.init();
 });
