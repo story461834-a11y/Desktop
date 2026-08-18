@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ALPHA-PREDICT AI | 100% 무료 AI 주가 예측 대시보드</title>
+  <meta name="description" content="0원으로 운영되는 인공지능 시계열 머신러닝 및 기술적 지표 융합 주가 예측 웹 플랫폼. 국내 대형주 및 미국 빅테크 종목의 미래 주가 경로와 투자 매력도 스코어를 실시간으로 확인하세요." />
+  <meta name="keywords" content="주식예측, AI주식, 머신러닝주가예측, 주식투자, 삼성전자예측, 엔비디아예측, 기술적분석, RSI, MACD" />
+  
+  <!-- Open Graph Meta -->
+  <meta property="og:title" content="ALPHA-PREDICT AI - AI 주가 예측 & 투자 분석 대시보드" />
+  <meta property="og:description" content="시계열 머신러닝 알고리즘과 앙상블 기술적 지표로 분석하는 스마트 주가 예측" />
+  <meta property="og:type" content="website" />
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+      <div class="nav-content">
+        <a href="#" class="brand-logo">
+          <div class="logo-icon">📈</div>
+          <span>ALPHA-PREDICT</span>
+          <span class="brand-badge">AI 2.0</span>
+        </a>
+
+        <!-- Market Overview Bar -->
+        <div class="market-ticker-bar">
+          <div class="stat-item">
+            <span>분석 종목:</span>
+            <strong id="statTotalAnalyzed">-개</strong>
+          </div>
+          <div class="stat-item">
+            <span>상승 우세:</span>
+            <strong id="statBullishCount" class="stat-bullish">-개</strong>
+          </div>
+          <div class="stat-item">
+            <span>관망/중립:</span>
+            <strong id="statNeutralCount" class="stat-neutral">-개</strong>
+          </div>
+          <div class="stat-item">
+            <span>조정 주의:</span>
+            <strong id="statBearishCount" class="stat-bearish">-개</strong>
+          </div>
+        </div>
+
+        <div class="nav-actions">
+          <div class="last-updated-badge">
+            <span class="live-pulse"></span>
+            <span>업데이트: <strong id="lastUpdatedTime">-</strong></span>
+          </div>
+          <a href="https://github.com" target="_blank" class="btn-github" id="githubLink">
+            <span>★ GitHub</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-layout">
+      <!-- Left Sidebar: Stock Selector & Watchlist -->
+      <aside class="sidebar-panel">
+        <div class="sidebar-header">
+          <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="stockSearchInput" class="search-input" placeholder="종목명, 티커, 섹터 검색..." />
+          </div>
+          <div class="market-tabs">
+            <button class="tab-btn active" data-filter="ALL">전체</button>
+            <button class="tab-btn" data-filter="KR">국내주식</button>
+            <button class="tab-btn" data-filter="US">미국주식</button>
+            <button class="tab-btn" data-filter="FAV">관심★</button>
+          </div>
+        </div>
+
+        <!-- Stock List Items -->
+        <div id="stockListContainer" class="stock-list">
+          <div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size: 0.8rem;">
+            데이터를 불러오는 중...
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Main Dashboard Content -->
+      <section class="content-area">
+        <!-- 1. Stock Hero Card & AI Gauge -->
+        <div class="stock-hero-card">
+          <div class="hero-main-info">
+            <div class="hero-badges">
+              <span id="heroMarketTag" class="market-tag">KOSPI</span>
+              <span id="heroCategoryTag" class="category-tag">반도체/IT</span>
+            </div>
+            <div class="hero-title-row">
+              <h1 id="heroStockName" class="hero-title">삼성전자</h1>
+              <span id="heroTicker" class="hero-ticker">005930.KS</span>
+            </div>
+            <div class="hero-price-row">
+              <span id="heroPrice" class="hero-current-price">-원</span>
+              <div id="heroDiff" class="hero-diff-badge bullish">
+                <span>▲ 0 (0.00%)</span>
+              </div>
+            </div>
+            <div class="hero-meta-stats">
+              <span>거래량: <strong id="heroVol">-</strong></span>
+              <span>52주 최고: <strong id="hero52wHigh">-</strong></span>
+              <span>52주 최저: <strong id="hero52wLow">-</strong></span>
+            </div>
+          </div>
+
+          <!-- AI Gauge Score -->
+          <div class="hero-ai-score-card">
+            <div class="score-circle-wrapper">
+              <svg class="score-circle-svg" viewBox="0 0 80 80">
+                <circle class="score-circle-bg" cx="40" cy="40" r="36" />
+                <circle id="aiScoreCircleVal" class="score-circle-val" cx="40" cy="40" r="36" />
+              </svg>
+              <span id="aiScoreNumber" class="score-number">-</span>
+            </div>
+            <div class="ai-signal-info">
+              <span class="ai-label">AI 종합 투자 매력도</span>
+              <span id="aiSignalBadge" class="ai-signal-badge bullish">분석 중</span>
+              <span id="aiConfidenceText" class="ai-confidence-text">신뢰도 지수: -%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Future Forecast Cards (7 Days & 30 Days) -->
+        <div class="forecast-cards-row">
+          <div class="forecast-card">
+            <div class="forecast-card-title">
+              <span>🔮 7일 후 AI 예상 주가</span>
+            </div>
+            <div id="forecast7dPrice" class="forecast-price">-</div>
+            <div id="forecast7dPct" class="forecast-pct bullish">▲ +0.00%</div>
+            <div id="forecast7dRange" class="forecast-range">예상 구간: - ~ -</div>
+          </div>
+
+          <div class="forecast-card">
+            <div class="forecast-card-title">
+              <span>🚀 30일 후 AI 중기 예상</span>
+            </div>
+            <div id="forecast30dPrice" class="forecast-price">-</div>
+            <div id="forecast30dPct" class="forecast-pct bullish">▲ +0.00%</div>
+            <div id="forecast30dRange" class="forecast-range">예상 구간: - ~ -</div>
+          </div>
+
+          <div class="forecast-card">
+            <div class="forecast-card-title">
+              <span>🎯 백테스팅 검증 적중률</span>
+            </div>
+            <div id="backtestAccuracy" class="forecast-price" style="color: var(--accent-cyan);">-</div>
+            <div class="forecast-pct" style="color: var(--text-secondary);">
+              과거 시뮬레이션 <strong id="backtestTests" style="color:var(--text-primary); margin-left:4px;">-회</strong>
+            </div>
+            <div class="forecast-range">방향성 일치율 기반 머신러닝 검증</div>
+          </div>
+        </div>
+
+        <!-- 3. Interactive Chart Panel -->
+        <div class="chart-card">
+          <div class="chart-toolbar">
+            <!-- Time Range -->
+            <div class="chart-tool-group">
+              <button class="tool-btn range-btn" data-range="1mo">1개월</button>
+              <button class="tool-btn range-btn" data-range="3mo">3개월</button>
+              <button class="tool-btn range-btn active" data-range="6mo">6개월</button>
+              <button class="tool-btn range-btn" data-range="all">전체</button>
+            </div>
+
+            <!-- Chart Type (Candle / Line) -->
+            <div class="chart-tool-group">
+              <button class="tool-btn type-btn active" data-type="candle">캔들</button>
+              <button class="tool-btn type-btn" data-type="line">라인</button>
+            </div>
+
+            <!-- Overlays -->
+            <div class="chart-tool-group">
+              <label class="toggle-chip active">
+                <input type="checkbox" id="toggleForecast" checked />
+                <span>🔮 AI 예측 구름대</span>
+              </label>
+              <label class="toggle-chip active">
+                <input type="checkbox" id="toggleSMA" checked />
+                <span>이동평균선</span>
+              </label>
+              <label class="toggle-chip active">
+                <input type="checkbox" id="toggleBollinger" checked />
+                <span>볼린저밴드</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Chart Canvas -->
+          <div class="chart-canvas-wrapper">
+            <div id="chartTooltip" class="chart-tooltip" style="display:none;"></div>
+            <canvas id="mainChartCanvas"></canvas>
+          </div>
+
+          <!-- Chart Legend -->
+          <div class="chart-legend">
+            <div class="legend-item">
+              <span class="legend-dot" style="background: #F59E0B;"></span>
+              <span>5일선</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background: #06B6D4;"></span>
+              <span>20일선</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background: #EC4899;"></span>
+              <span>60일선</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background: #8B5CF6;"></span>
+              <span>120일선</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background: rgba(6, 182, 212, 0.4);"></span>
+              <span>AI 미래 예측 신뢰구간 (90%)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. AI Deep Analysis & Indicator Matrix -->
+        <div class="analysis-grid">
+          <!-- Left: AI Score Breakdown & Key Takeaways -->
+          <div class="analysis-card">
+            <div class="analysis-card-header">
+              <h3 class="analysis-title">
+                <span>🧠 AI 다면 평가 4대 핵심 축</span>
+              </h3>
+            </div>
+            
+            <div class="score-breakdown-list">
+              <div class="score-bar-item">
+                <div class="score-bar-labels">
+                  <span>추세 정합도 (이평선 정배열 / 기울기)</span>
+                  <span id="scoreTrendVal">0/25점</span>
+                </div>
+                <div class="score-bar-track">
+                  <div id="scoreTrendBar" class="score-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="score-bar-item">
+                <div class="score-bar-labels">
+                  <span>모멘텀 강도 (RSI / MACD 신호)</span>
+                  <span id="scoreMomentumVal">0/25점</span>
+                </div>
+                <div class="score-bar-track">
+                  <div id="scoreMomentumBar" class="score-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="score-bar-item">
+                <div class="score-bar-labels">
+                  <span>지지/저항 및 변동성 (볼린저 / 스토캐스틱)</span>
+                  <span id="scoreSupportVal">0/25점</span>
+                </div>
+                <div class="score-bar-track">
+                  <div id="scoreSupportBar" class="score-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="score-bar-item">
+                <div class="score-bar-labels">
+                  <span>수급 및 거래량 파워 (Volume Ratio)</span>
+                  <span id="scoreVolumeVal">0/25점</span>
+                </div>
+                <div class="score-bar-track">
+                  <div id="scoreVolumeBar" class="score-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 0.5rem;">
+              <h4 style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;">📌 AI 핵심 진단 리포트</h4>
+              <ul id="aiReasonsList" class="reasons-list">
+                <li>분석 데이터를 계산 중입니다...</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Right: Technical Indicators Matrix -->
+          <div class="analysis-card">
+            <div class="analysis-card-header">
+              <h3 class="analysis-title">
+                <span>📊 주요 기술적 보조지표 종합 판정</span>
+              </h3>
+            </div>
+
+            <table class="indicator-table">
+              <thead>
+                <tr>
+                  <th>지표명</th>
+                  <th>현재 수치</th>
+                  <th>상태 판정</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>RSI (14일)</strong></td>
+                  <td id="indRsiVal">-</td>
+                  <td><span id="indRsiBadge" class="indicator-status-badge neutral">-</span></td>
+                </tr>
+                <tr>
+                  <td><strong>MACD (12, 26, 9)</strong></td>
+                  <td id="indMacdVal">-</td>
+                  <td><span id="indMacdBadge" class="indicator-status-badge neutral">-</span></td>
+                </tr>
+                <tr>
+                  <td><strong>20일 이동평균선</strong></td>
+                  <td id="indSmaVal">-</td>
+                  <td><span id="indSmaBadge" class="indicator-status-badge neutral">-</span></td>
+                </tr>
+                <tr>
+                  <td><strong>볼린저 밴드 (20, 2)</strong></td>
+                  <td id="indBbVal">-</td>
+                  <td><span id="indBbBadge" class="indicator-status-badge neutral">-</span></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="backtest-banner">
+              <div class="backtest-text">
+                <strong>💡 0원(무료) 완전 자동화 시스템</strong><br />
+                GitHub Actions가 매일 장 마감 후 최신 데이터를 수집하여 AI 모델을 재학습하고 자동으로 사이트를 갱신합니다.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-links">
+        <a href="#github">GitHub Repository</a>
+        <a href="#guide">운영 가이드</a>
+        <a href="#disclaimer">면책 조항</a>
+      </div>
+      <p>© 2026 ALPHA-PREDICT AI. 본 프로그램은 인공지능 시계열 머신러닝 알고리즘에 기반한 분석 정보를 제공하며, 투자의 최종 책임은 본인에게 있습니다.</p>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/chart_engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
