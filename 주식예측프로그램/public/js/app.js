@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const App = {
     currentTicker: 'AAPL',
     currentCurrency: 'USD',
-    fxRate: 1385,
+    fxRate: 1415.20, // 1 USD = 1415.20 KRW (실시간 기본값)
     currentStockData: null,
     chartEngine: null,
     refreshTimer: null,
@@ -51,8 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
       this.initElements();
       this.initChart();
       this.bindEvents();
-      this.fetchRealExchangeRate();
-      await this.loadStock('AAPL'); // Default: Apple Live
+      await this.fetchRealExchangeRate(); // 실시간 환율 즉시 갱신
+      await this.loadStock('AAPL');
       this.startAutoRefresh();
     },
 
@@ -186,19 +186,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async fetchRealExchangeRate() {
       try {
-        const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/USDKRW=X?interval=1d&range=5d'));
+        // 1. Primary: 100% CORS-free Real-time Global Exchange Rate API
+        const res = await fetch('https://open.er-api.com/v6/latest/USD');
         if (res.ok) {
           const json = await res.json();
-          const rate = json.chart.result[0].meta.regularMarketPrice;
-          if (rate && rate > 1000) {
-            this.fxRate = Math.round(rate);
+          if (json && json.rates && json.rates.KRW) {
+            this.fxRate = Math.round(json.rates.KRW * 100) / 100;
             if (this.el.fxRateNote) {
               this.el.fxRateNote.textContent = `(실시간 환율: $1 = ₩${this.fxRate.toLocaleString()})`;
             }
+            if (this.chartEngine) {
+              this.chartEngine.setCurrency(this.currentCurrency, this.fxRate);
+            }
+            return;
           }
         }
       } catch (e) {
-        // Fallback default fxRate
+        // Fallback: Yahoo Finance KRW=X
+        try {
+          const yRes = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/KRW=X?interval=1d&range=1d'));
+          if (yRes.ok) {
+            const yJson = await yRes.json();
+            const rate = yJson.chart.result[0].meta.regularMarketPrice;
+            if (rate && rate > 1000) {
+              this.fxRate = Math.round(rate * 100) / 100;
+              if (this.el.fxRateNote) {
+                this.el.fxRateNote.textContent = `(실시간 환율: $1 = ₩${this.fxRate.toLocaleString()})`;
+              }
+            }
+          }
+        } catch (err) {
+          // Keep 1415.20
+        }
       }
     },
 
