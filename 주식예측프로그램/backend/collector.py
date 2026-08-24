@@ -1,6 +1,6 @@
 """
-주식 데이터 수집기 (Stock Data Collector) - 미국 주식 전용 (US Equities Only)
-yfinance를 사용하여 미국 대표 빅테크 및 AI/반도체/성장주 데이터를 수집합니다.
+주식 데이터 수집기 (Stock Data Collector) - 글로벌 및 국내 주식 (US & KR Equities)
+yfinance를 사용하여 미국 대표 빅테크 및 국내 대표 우량주 데이터를 수집합니다.
 비용: 0원 (완전 무료)
 """
 
@@ -11,8 +11,21 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
-# 미국 대표 핵심 종목 리스트 (AI/반도체, 빅테크, 플랫폼, 성장주)
+# 글로벌 & 국내 핵심 대표 종목 리스트
 STOCKS_CONFIG = [
+    # 국내 대표 우량주 (코스피 / 코스닥)
+    {"ticker": "005930.KS", "code": "005930", "name": "삼성전자", "market": "KOSPI", "currency": "KRW", "category": "반도체 / IT"},
+    {"ticker": "000660.KS", "code": "000660", "name": "SK하이닉스", "market": "KOSPI", "currency": "KRW", "category": "반도체 / 메모리"},
+    {"ticker": "005380.KS", "code": "005380", "name": "현대차", "market": "KOSPI", "currency": "KRW", "category": "자동차 / 모빌리티"},
+    {"ticker": "035420.KS", "code": "035420", "name": "NAVER", "market": "KOSPI", "currency": "KRW", "category": "플랫폼 / AI"},
+    {"ticker": "035720.KS", "code": "035720", "name": "카카오", "market": "KOSPI", "currency": "KRW", "category": "플랫폼 / 모바일"},
+    {"ticker": "068270.KS", "code": "068270", "name": "셀트리온", "market": "KOSPI", "currency": "KRW", "category": "바이오 / 헬스케어"},
+    {"ticker": "373220.KS", "code": "373220", "name": "LG에너지솔루션", "market": "KOSPI", "currency": "KRW", "category": "2차전지 / 배터리"},
+    {"ticker": "247540.KQ", "code": "247540", "name": "에코프로비엠", "market": "KOSDAQ", "currency": "KRW", "category": "2차전지 / 양극재"},
+    {"ticker": "196170.KQ", "code": "196170", "name": "알테오젠", "market": "KOSDAQ", "currency": "KRW", "category": "바이오 / 신약"},
+    {"ticker": "005490.KS", "code": "005490", "name": "POSCO홀딩스", "market": "KOSPI", "currency": "KRW", "category": "철강 / 친환경소재"},
+
+    # 미국 대표 빅테크 및 성장주
     {"ticker": "NVDA", "code": "NVDA", "name": "엔비디아 (NVIDIA)", "market": "NASDAQ", "currency": "USD", "category": "AI / GPU"},
     {"ticker": "AAPL", "code": "AAPL", "name": "애플 (Apple)", "market": "NASDAQ", "currency": "USD", "category": "빅테크 / 모바일"},
     {"ticker": "TSLA", "code": "TSLA", "name": "테슬라 (Tesla)", "market": "NASDAQ", "currency": "USD", "category": "전기차 / AI"},
@@ -33,9 +46,9 @@ STOCKS_CONFIG = [
 
 def fetch_stock_data(ticker_symbol: str, period: str = "2y") -> pd.DataFrame:
     """
-    미국 주식 일봉 OHLCV 데이터를 수집합니다.
+    일봉 OHLCV 데이터를 수집합니다.
     """
-    logging.info(f"[{ticker_symbol}] 미국 주가 데이터 다운로드 (기간: {period})...")
+    logging.info(f"[{ticker_symbol}] 주가 데이터 다운로드 (기간: {period})...")
     try:
         ticker = yf.Ticker(ticker_symbol)
         df = ticker.history(period=period, interval="1d", auto_adjust=False)
@@ -63,3 +76,4 @@ def fetch_stock_data(ticker_symbol: str, period: str = "2y") -> pd.DataFrame:
 if __name__ == "__main__":
     df = fetch_stock_data("NVDA", period="1mo")
     print(df.tail())
+
